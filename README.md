@@ -136,5 +136,6 @@ public class MainActivity extends AppCompatActivity {
 }
 ```
 - khi run app ta sẽ có giao diện như sau
-
+<img src="https://github.com/hienqp/ngay044-Fragment-DialogFragment/blob/main/Screenshot_20220924_224903.png">
 - khi click vào Button giả lập xóa sản phẩm
+<img src="https://github.com/hienqp/ngay044-Fragment-DialogFragment/blob/main/Screenshot_20220924_224919.png">
