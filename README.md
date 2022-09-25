@@ -77,7 +77,7 @@ public class AskDeleteProductDialogFragment extends DialogFragment {
                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-
+                                Toast.makeText(getActivity(), "XÓA", Toast.LENGTH_SHORT).show();
                             }
                         }
                 )
@@ -86,7 +86,7 @@ public class AskDeleteProductDialogFragment extends DialogFragment {
                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-
+                                Toast.makeText(getActivity(), "KHÔNG", Toast.LENGTH_SHORT).show();
                             }
                         }
                 );
@@ -139,3 +139,102 @@ public class MainActivity extends AppCompatActivity {
 <img src="https://github.com/hienqp/ngay044-Fragment-DialogFragment/blob/main/Screenshot_20220924_224903.png">
 - khi click vào Button giả lập xóa sản phẩm
 <img src="https://github.com/hienqp/ngay044-Fragment-DialogFragment/blob/main/Screenshot_20220924_224919.png">
+
+___
+
+SỬ DỤNG INTERFACE TẠO CALLBACK TƯƠNG TÁC GIỮA DIALOG FRAGMENT VÀ ACTIVITY
+
+- sau khi DialogFragment được gọi, user click vào tùy chọn __"Có"__ hoặc __"Không"__ 1 thông báo Toast sẽ hiển thị __CÓ__ hoặc __KHÔNG__, thì đây chỉ là kết quả của logic trên DialogFragment, hoàn toàn chưa có tác động nào đến Activity khi user click vào tùy chọn trên DialogFragment
+- giả sử ta đang tương tác 1 với ListView của Activity, hộp thoại DialogFragment được gọi, vậy làm sao để tác động ở DialogFragment nó cũng ảnh hưởng đến ListView của Activity
+- ta sẽ sử dụng INTERFACE để truyền data (callback) 1 giá trị nào đó từ DialogFragment cho Activity
+- khai báo 1 __Interface ConfirmDeleteData__
+```java
+package com.hienqp.dialogfragment;
+
+public interface ConfirmDeleteData {
+    public void deleteCommand(boolean delete);
+}
+```
+- interface ConfirmDeleteData chứa 1 method trừu tượng __deleteCommand()__
+- method __deleteCommand(boolean delete)__ sẽ nhận vào 1 giá trị boolean xác nhận XÓA hay KHÔNG
+
+___
+
+SỬ DỤNG INTERFACE ConfirmDeleteData
+
+- ở DialogFragment ta khai báo interface ConfirmDeleteData
+```java
+    ConfirmDeleteData confirmDeleteData;
+```
+- trong __onAttach()__ hoặc do ta đang trong DialogFragment, ta sẽ gán interface đã khai báo cho __getActivity()__ để lấy Activity mà DialogFragment đang liên kết, để biết data sẽ trả về cho Activity nào
+```java
+        confirmDeleteData = (ConfirmDeleteData) getActivity();
+```
+- ở hai sự kiện click vào Button Có hoặc Không trên DialogFragment, ta sẽ truyền giá trị __true__ hoặc __false__ tương ứng vào method __deleteCommand()__ của interface đã khai báo, vì ta đã __getActivity()__ cho biến interface này nên Activity đã implement Interface này sẽ nhận được giá trị tương ứng khi override method của interface đã implement
+```java
+        dialogBuilder.setTitle("Xác nhận")
+                .setMessage("Bạn có muốn xóa sản phẩm này không")
+                .setPositiveButton(
+                        "Có",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                confirmDeleteData.deleteCommand(true);
+                            }
+                        }
+                )
+                .setNegativeButton(
+                        "Không",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                confirmDeleteData.deleteCommand(false);
+                            }
+                        }
+                );
+```
+- ở MainActivity ta __implements ConfirmDeleteData__ và override method __deleteCommand()__ của interface ConfirmDeleteData
+- method override này sẽ truyền vào giá trị tương ứng với sự kiện click vào button bên DialogFragment
+- lúc này tùy vào giá trị tham số truyền vào mà ta xử lý logic code tương ứng
+- __MainActivity.java__
+```java
+package com.hienqp.dialogfragment;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.Toast;
+
+public class MainActivity extends AppCompatActivity implements ConfirmDeleteData{
+    Button btnDeleteProduct;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        btnDeleteProduct = findViewById(R.id.button_delete_product);
+
+        btnDeleteProduct.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AskDeleteProductDialogFragment dialogFragment = new AskDeleteProductDialogFragment();
+                dialogFragment.show(getFragmentManager(), "dialogFragment");
+            }
+        });
+    }
+
+    @Override
+    public void deleteCommand(boolean delete) {
+        if (delete) {
+            Toast.makeText(this, "ACTIVITY: XÓA SẢN PHẨM", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "ACTIVITY: KHÔNG XÓA", Toast.LENGTH_SHORT).show();
+        } 
+    }
+}
+```
+- như vậy, khi user click vào button __CÓ__ hoặc __KHÔNG__ bên DialogFragment thì sẽ trả về giá trị tương ứng cho Activity để Toast thông báo nằm bên Activity, tức là tác động tức thì trên giao diện của Activity từ DialogFragment
+<img src="https://github.com/hienqp/ngay044-Fragment-DialogFragment/blob/main/Screenshot_20220925_232249.png">
